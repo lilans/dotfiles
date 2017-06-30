@@ -145,3 +145,35 @@
          ("C-x l" . counsel-locate)
          ("C-S-o" . counsel-rhytmbox)
          ("C-r" . counsel-expression-history)))
+
+(add-to-list 'default-frame-alist '(font . "Monaco 9"))
+
+
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(package-selected-packages
+   (quote
+    (flycheck-clangcheck zenburn-theme zenburn use-package rainbow-mode rainbow-delimiters powerline imenu-anywhere idle-require idle-highlight-mode idle-highlight firebelly-theme dracula-theme counsel company cl-lib-highlight cherry-blossom-theme boon))))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
+
+(require 'flycheck-clangcheck)
+
+(defun my-select-clangcheck-for-checker ()
+  "Select clang-check for flycheck's checker."
+  (flycheck-set-checker-executable 'c/c++-clangcheck
+                                   "/usr/bin/clang-check")
+  (flycheck-select-checker 'c/c++-clangcheck))
+
+(add-hook 'c-mode-hook #'my-select-clangcheck-for-checker)
+(add-hook 'c++-mode-hook #'my-select-clangcheck-for-checker)
+
+;; enable static analysis
+(setq flycheck-clangcheck-analyze t)
