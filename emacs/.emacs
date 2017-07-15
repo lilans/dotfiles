@@ -47,6 +47,12 @@
   (package-refresh-contents)
   (package-install 'use-package))
 
+;; packages
+(when (>= emacs-major-version 24)
+  (require 'package)
+  (package-initialize)
+  (add-to-list 'package-archives '("melpa" . "http://melpa.milkbox.net/packages/") t)
+  )
 
 (setq-default frame-title-format
  '(:eval (concat (when (file-remote-p default-directory)
@@ -156,7 +162,7 @@
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (flycheck-clangcheck zenburn-theme zenburn use-package rainbow-mode rainbow-delimiters powerline imenu-anywhere idle-require idle-highlight-mode idle-highlight firebelly-theme dracula-theme counsel company cl-lib-highlight cherry-blossom-theme boon))))
+    (racer flycheck-rust cargo rust-mode flymake-google-cpplint flymake-cppcheck google-c-style flycheck-clangcheck zenburn-theme zenburn use-package rainbow-mode rainbow-delimiters powerline imenu-anywhere idle-require idle-highlight-mode idle-highlight firebelly-theme dracula-theme counsel company cl-lib-highlight cherry-blossom-theme boon))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -177,3 +183,56 @@
 
 ;; enable static analysis
 (setq flycheck-clangcheck-analyze t)
+
+(use-package clang-format
+  :ensure t
+  :defer t
+  :init 
+  :bind (("C-c r" . clang-format-region)
+	 ("C-c u" . clang-format-buffer)))
+  
+(setq clang-format-style-option "google")
+
+
+;; Rust
+(use-package rust-mode
+  :ensure t
+  :defer t
+  :init (add-hook 'rust-mode-hook 'cargo-minor-mode))
+
+  
+(use-package cargo
+  :ensure t
+  :defer t
+  :init
+  :bind (("C-c C-b" . cargo-process-build)
+	 ("C-c C-r" . cargo-process-run)
+         ("C-c C-t" . cargo-process-test)))
+
+(add-hook 'rust-mode-hook
+          (lambda ()
+            (local-set-key (kbd "C-c f") #'rust-format-buffer)))
+
+(setq rustfmt-bin "~/.cargo/bin/rustfmt")
+
+(defun indent-buffer ()
+  "Indent current buffer according to major mode."
+  (interactive)
+  (indent-region (point-min) (point-max)))
+
+
+(setq racer-cmd "~/.cargo/bin/racer") ;; Rustup binaries PATH
+(setq racer-rust-src-path "~/git/rust/src") ;; Rust source code PATH
+
+(add-hook 'rust-mode-hook #'racer-mode)
+(add-hook 'racer-mode-hook #'eldoc-mode)
+(add-hook 'racer-mode-hook #'company-mode)
+
+(require 'rust-mode)
+(define-key rust-mode-map (kbd "TAB") #'company-indent-or-complete-common)
+(setq company-tooltip-align-annotations t)
+
+(use-package flycheck-rust
+  :ensure t
+  :defer t
+  :init (add-hook 'flycheck-mode-hook #'flycheck-rust-setup))
