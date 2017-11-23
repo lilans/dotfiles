@@ -1,4 +1,11 @@
-;disable backup
+(defvar package-check-signature nil)
+(require 'package)
+(setq package-enable-at-startup nil)
+(add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/"))
+(add-to-list 'package-archives '("marmalade" . "http://marmalade-repo.org/packages/"))
+(add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/"))
+(package-initialize)
+					;disable backup
 (setq backup-inhibited t)
 ;disable auto save
 (setq auto-save-default nil)
@@ -95,11 +102,6 @@
   :defer t
   :init (global-company-mode))
 
-(use-package boon
-  :ensure t
-  :defer t
-  :init (boon-mode))
-
 (use-package powerline
   :ensure t
   :defer t
@@ -112,8 +114,7 @@
 
 (use-package rainbow-mode
   :ensure t
-  :defer t
-  :init (rainbow-mode))
+  :defer t)
 
 (add-hook 'prog-mode-hook #'rainbow-delimiters-mode)
 
@@ -145,15 +146,104 @@
          ("<f1> l" . counsel-load-library)
          ("<f2> i" . counsel-info-lookup-symbol)
          ("<f2> u" . counsel-unicode-char)
-         ("C-c g" . counsel-git)
+         ("C-c g i" . counsel-git)
          ("C-c j" . counsel-git-grep)
          ("C-c k" . counsel-ag)
          ("C-x l" . counsel-locate)
          ("C-S-o" . counsel-rhytmbox)
          ("C-r" . counsel-expression-history)))
 
-(add-to-list 'default-frame-alist '(font . "Monaco 9"))
+(use-package expand-region
+  :ensure t
+  :defer
+  :init
+  :bind (("M-s" . er/expand-region)))
 
+
+(add-to-list 'default-frame-alist '(font . "Source Code Pro 10"))
+(add-to-list 'load-path "/home/lanskih/git/ace-jump-mode/")
+
+(autoload
+  'ace-jump-mode
+  "ace-jump-mode"
+  "Emacs quick move minor mode"
+  t)
+
+(define-key global-map (kbd "C-c SPC") 'ace-jump-mode)
+
+(use-package magit
+  :ensure t
+  :defer
+  :init)
+
+(use-package elpy
+  :ensure t
+  :defer
+  :init (elpy-enable)
+  (setq elpy-rpc-backend "jedi"))
+
+(electric-pair-mode)
+
+(defun prelude-personal-python-mode-defaults ()
+  "Personal defaults for Python programming."
+  ;; Enable elpy mode
+  (elpy-mode)
+  ;; Jedi backend
+  (jedi:setup)
+  ;; (setq jedi:complete-on-dot t) ;optional
+  (auto-complete-mode)
+  (jedi:ac-setup)
+  (setq elpy-rpc-python-command "python3")
+  ;; (python-shell-interpreter "ipython3")
+  (company-quickhelp-mode))
+
+(setq prelude-personal-python-mode-hook 'prelude-personal-python-mode-defaults)
+
+(add-hook 'python-mode-hook (lambda ()
+                              (run-hooks 'prelude-personal-python-mode-hook)))
+
+(use-package jedi
+  :ensure t
+  :defer
+  :init)
+
+(add-hook 'python-mode-hook 'jedi:setup)
+
+
+;; ensure that we use only rtagschecking
+;; https://github.com/Andersbakken/rtags#optional-1
+(defun setup-flycheck-rtags ()
+  (interactive)
+  (flycheck-select-checker 'rtags)
+  ;; RTags creates more accurate overlays.
+  (setq-local flycheck-highlighting-mode nil)
+  (setq-local flycheck-check-syntax-automatically nil))
+
+
+(require 'xah-fly-keys)
+(xah-fly-keys-set-layout "qwerty")
+(xah-fly-keys 1)
+
+(use-package which-key
+  :ensure t
+  :defer t
+  :init (which-key-mode) (which-key-setup-minibuffer) )
+
+(add-hook 'c-mode-hook 'rtags-start-process-unless-running)
+(add-hook 'c++-mode-hook 'rtags-start-process-unless-running)
+(add-hook 'objc-mode-hook 'rtags-start-process-unless-running)
+
+(require 'rtags)
+(require 'company)
+
+(setq rtags-autostart-diagnostics t)
+(rtags-diagnostics)
+(setq rtags-completions-enabled t)
+(push 'company-rtags company-backends)
+(global-company-mode)
+(define-key c-mode-base-map (kbd "<C-tab>") (function company-complete))
+
+(rtags-enable-standard-keybindings c-mode-base-map "\C-r" )
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -162,77 +252,10 @@
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (racer flycheck-rust cargo rust-mode flymake-google-cpplint flymake-cppcheck google-c-style flycheck-clangcheck zenburn-theme zenburn use-package rainbow-mode rainbow-delimiters powerline imenu-anywhere idle-require idle-highlight-mode idle-highlight firebelly-theme dracula-theme counsel company cl-lib-highlight cherry-blossom-theme boon))))
+    (which-key package-store xah-fly-keys indent-guide focus rtags rainbow-mode use-package rainbow-identifiers rainbow-delimiters rainbow-blocks powerline magit jedi imenu-anywhere elpy dracula-theme counsel boon anzu ace-window))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  )
-
-(require 'flycheck-clangcheck)
-
-(defun my-select-clangcheck-for-checker ()
-  "Select clang-check for flycheck's checker."
-  (flycheck-set-checker-executable 'c/c++-clangcheck
-                                   "/usr/bin/clang-check")
-  (flycheck-select-checker 'c/c++-clangcheck))
-
-(add-hook 'c-mode-hook #'my-select-clangcheck-for-checker)
-(add-hook 'c++-mode-hook #'my-select-clangcheck-for-checker)
-
-;; enable static analysis
-(setq flycheck-clangcheck-analyze t)
-
-(use-package clang-format
-  :ensure t
-  :defer t
-  :init 
-  :bind (("C-c r" . clang-format-region)
-	 ("C-c u" . clang-format-buffer)))
-  
-(setq clang-format-style-option "google")
-
-
-;; Rust
-(use-package rust-mode
-  :ensure t
-  :defer t
-  :init (add-hook 'rust-mode-hook 'cargo-minor-mode))
-
-  
-(use-package cargo
-  :ensure t
-  :defer t
-  :init
-  :bind (("C-c C-b" . cargo-process-build)
-	 ("C-c C-r" . cargo-process-run)
-         ("C-c C-t" . cargo-process-test)))
-
-(add-hook 'rust-mode-hook
-          (lambda ()
-            (local-set-key (kbd "C-c f") #'rust-format-buffer)))
-
-(setq rustfmt-bin "~/.cargo/bin/rustfmt")
-
-(defun indent-buffer ()
-  "Indent current buffer according to major mode."
-  (interactive)
-  (indent-region (point-min) (point-max)))
-
-
-(setq racer-cmd "~/.cargo/bin/racer") ;; Rustup binaries PATH
-(setq racer-rust-src-path "~/git/rust/src") ;; Rust source code PATH
-
-(add-hook 'rust-mode-hook #'racer-mode)
-(add-hook 'racer-mode-hook #'eldoc-mode)
-(add-hook 'racer-mode-hook #'company-mode)
-
-(require 'rust-mode)
-(define-key rust-mode-map (kbd "TAB") #'company-indent-or-complete-common)
-(setq company-tooltip-align-annotations t)
-
-(use-package flycheck-rust
-  :ensure t
-  :defer t
-  :init (add-hook 'flycheck-mode-hook #'flycheck-rust-setup))
