@@ -5,9 +5,8 @@
 (add-to-list 'package-archives '("marmalade" . "http://marmalade-repo.org/packages/"))
 (add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/"))
 (package-initialize)
-					;disable backup
+
 (setq backup-inhibited t)
-;disable auto save
 (setq auto-save-default nil)
 
 (package-initialize)
@@ -16,38 +15,42 @@
 
 ;; Disable GUI components
 (tooltip-mode      -1)
-(menu-bar-mode     -1) ;; отключаем графическое меню
-(tool-bar-mode     -1) ;; отключаем tool-bar
-(scroll-bar-mode   -1) ;; отключаем полосу прокрутки
-(setq use-dialog-box     nil) ;; никаких графических диалогов и окон - все через минибуфер
-(setq redisplay-dont-pause t)  ;; лучшая отрисовка буфера
-(setq ring-bell-function 'ignore) ;; отключить звуковой сигнал
+(menu-bar-mode     -1)
+(tool-bar-mode     -1)
+(scroll-bar-mode   -1)
+(setq use-dialog-box     nil)
+(setq redisplay-dont-pause t)
+(setq ring-bell-function 'ignore)
 
 ;; Linum plugin
-(require 'linum) ;; вызвать Linum
-(line-number-mode   t) ;; показать номер строки в mode-line
-(global-linum-mode  t) ;; показывать номера строк во всех буферах
-(column-number-mode t) ;; показать номер столбца в mode-line
-(setq linum-format  "%d ") ;; задаем формат нумерации строк
+(require 'linum)
+(line-number-mode   t)
+(global-linum-mode  t)
+(column-number-mode t)
+(setq linum-format  "%d ")
 
 ;; Fringe settings
-(fringe-mode '(8 . 0)) ;; органичиталь текста только слева
-(setq-default indicate-empty-lines t) ;; отсутствие строки выделить глифами рядом с полосой с номером строки
-(setq-default indicate-buffer-boundaries 'left) ;; индикация только слева
+(fringe-mode '(8 . 0))
+(setq-default indicate-empty-lines t)
+(setq-default indicate-buffer-boundaries 'left)
 
 ;; Line wrapping
-(setq word-wrap          t) ;; переносить по словам
+(setq word-wrap          t)
 (global-visual-line-mode t)
 
 ;; Scrolling settings
-(setq scroll-step               1) ;; вверх-вниз по 1 строке
-(setq scroll-margin            10) ;; сдвигать буфер верх/вниз когда курсор в 10 шагах от верхней/нижней границы
+(setq scroll-step               1)
+(setq scroll-margin            10)
 (setq scroll-conservatively 10000)
 
 (setq x-select-enable-clipboard t)
 
 (setq search-highlight        t)
 (setq query-replace-highlight t)
+
+(setq-default indent-tabs-mode nil)
+(setq-default tab-width 4)
+(setq indent-line-function 'insert-tab)
 
 ;; Bootstrap `use-package'
 (unless (package-installed-p 'use-package)
@@ -118,10 +121,10 @@
 
 (add-hook 'prog-mode-hook #'rainbow-delimiters-mode)
 
-(if (display-graphic-p) 
+(if (display-graphic-p)
     (load-theme 'dracula t)
   (load-theme 'zenburn t))
- 
+
 (use-package swiper
   :ensure t
   :defer
@@ -133,14 +136,14 @@
   :defer
   :init (ivy-mode)
   :bind (("C-c C-r" . ivy-resume)
-	 ("<f6>" . ivy-resume)))
+         ("<f6>" . ivy-resume)))
 
 (use-package counsel
   :ensure t
   :defer
   :init
   :bind (("M-x" . counsel-M-x)
-	 ("C-c C-f" . counsel-find-file)
+         ("C-c C-f" . counsel-find-file)
          ("<f1> f" . counsel-describe-function)
          ("<f1> v" . counsel-describe-variable)
          ("<f1> l" . counsel-load-library)
@@ -166,7 +169,6 @@
 (autoload
   'ace-jump-mode
   "ace-jump-mode"
-  "Emacs quick move minor mode"
   t)
 
 (define-key global-map (kbd "C-c SPC") 'ace-jump-mode)
@@ -185,16 +187,11 @@
 (electric-pair-mode)
 
 (defun prelude-personal-python-mode-defaults ()
-  "Personal defaults for Python programming."
-  ;; Enable elpy mode
   (elpy-mode)
-  ;; Jedi backend
   (jedi:setup)
-  ;; (setq jedi:complete-on-dot t) ;optional
   (auto-complete-mode)
   (jedi:ac-setup)
   (setq elpy-rpc-python-command "python3")
-  ;; (python-shell-interpreter "ipython3")
   (company-quickhelp-mode))
 
 (setq prelude-personal-python-mode-hook 'prelude-personal-python-mode-defaults)
@@ -207,15 +204,9 @@
   :defer
   :init)
 
-(add-hook 'python-mode-hook 'jedi:setup)
-
-
-;; ensure that we use only rtagschecking
-;; https://github.com/Andersbakken/rtags#optional-1
 (defun setup-flycheck-rtags ()
   (interactive)
   (flycheck-select-checker 'rtags)
-  ;; RTags creates more accurate overlays.
   (setq-local flycheck-highlighting-mode nil)
   (setq-local flycheck-check-syntax-automatically nil))
 
@@ -245,17 +236,25 @@
 
 (rtags-enable-standard-keybindings c-mode-base-map "\C-r" )
 
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(package-selected-packages
-   (quote
-    (which-key package-store xah-fly-keys indent-guide focus rtags rainbow-mode use-package rainbow-identifiers rainbow-delimiters rainbow-blocks powerline magit jedi imenu-anywhere elpy dracula-theme counsel boon anzu ace-window))))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
+(defun infer-indentation-style ()
+  (let ((space-count (how-many "^  " (point-min) (point-max)))
+        (tab-count (how-many "^\t" (point-min) (point-max))))
+    (if (> space-count tab-count) (setq indent-tabs-mode nil))
+    (if (> tab-count space-count) (setq indent-tabs-mode t))))
+
+(setq indent-tabs-mode t)
+(infer-indentation-style)
+(c-add-style "my-style"
+             '("stroustrup"
+               (indent-tabs-mode . t)
+               (c-basic-offset . 4)            ; indent by four spaces
+               (c-offsets-alist . ((inline-open . 0)  ; custom indentation rules
+                                   (brace-list-open . 0)
+                                   (statement-case-open . +)))))
+
+(defun my-c++-mode-hook ()
+  (c-set-style "my-style")
+  (auto-fill-mode)
+  (c-toggle-auto-hungry-state 1))
+
+(add-hook 'c++-mode-hook 'my-c++-mode-hook)
