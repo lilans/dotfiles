@@ -6,6 +6,11 @@
 (add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/"))
 (package-initialize)
 
+(unless (require 'quelpa nil t)
+  (with-temp-buffer
+    (url-insert-file-contents "https://raw.github.com/quelpa/quelpa/master/bootstrap.el")
+    (eval-buffer)))
+
 (setq backup-inhibited t)
 (setq auto-save-default nil)
 
@@ -78,14 +83,6 @@
   (advice-add #'load- :after set-transparent-fringe)
   (advice-add #'disable- :after set-transparent-fringe))
 
-
-(require 'package)
-(setq package-enable-at-startup nil)
-(add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/"))
-(add-to-list 'package-archives '("marmalade" . "http://marmalade-repo.org/packages/"))
-(add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/"))
-(package-initialize)
-
 (unless (package-installed-p 'use-package)
   (package-refresh-contents)
   (package-install 'use-package))
@@ -121,15 +118,29 @@
 
 (add-hook 'prog-mode-hook #'rainbow-delimiters-mode)
 
-(if (display-graphic-p)
-    (load-theme 'dracula t)
-  (load-theme 'zenburn t))
+(quelpa '(font-lock+ :repo "emacsmirror/font-lock-plus" :fetcher github))
 
-(use-package swiper
-  :ensure t
-  :defer
-  :init
-  :bind (("\C-s" . swiper)))
+(add-to-list 'load-path "/home/lanskih/git/all-the-icons.el/")
+(use-package all-the-icons)
+
+(use-package font-lock+
+  :ensure t)
+
+(add-to-list 'load-path "/home/lanskih/git/emacs-doom-themes/")
+
+;; (load-theme 'zenburn t)
+(require 'doom-themes)
+
+;; Global settings (defaults)
+(setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
+      doom-themes-enable-italic t) ; if nil, italics is universally disabled
+
+;; Load the theme (doom-one, doom-molokai, etc); keep in mind that each theme
+;; may have their own settings.
+(load-theme 'doom-vibrant t)
+
+;; Enable flashing mode-line on errors
+(doom-themes-visual-bell-config)
 
 (use-package ivy
   :ensure t
@@ -258,3 +269,17 @@
   (c-toggle-auto-hungry-state 1))
 
 (add-hook 'c++-mode-hook 'my-c++-mode-hook)
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(package-selected-packages
+   (quote
+    (doom-themes zenburn-theme zenburn xah-fly-keys which-key use-package rainbow-mode rainbow-identifiers rainbow-delimiters rainbow-blocks powerline package-store magit jedi indent-guide imenu-anywhere focus flycheck-rtags elpy dracula-theme counsel boon anzu ace-window))))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
