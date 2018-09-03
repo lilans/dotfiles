@@ -6,11 +6,6 @@
 (add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/"))
 (package-initialize)
 
-(unless (require 'quelpa nil t)
-  (with-temp-buffer
-    (url-insert-file-contents "https://raw.github.com/quelpa/quelpa/master/bootstrap.el")
-    (eval-buffer)))
-
 (setq backup-inhibited t)
 (setq auto-save-default nil)
 
@@ -118,8 +113,6 @@
 
 (add-hook 'prog-mode-hook #'rainbow-delimiters-mode)
 
-(quelpa '(font-lock+ :repo "emacsmirror/font-lock-plus" :fetcher github))
-
 (add-to-list 'load-path "/home/lanskih/git/all-the-icons.el/")
 (use-package all-the-icons)
 
@@ -128,7 +121,6 @@
 
 (add-to-list 'load-path "/home/lanskih/git/emacs-doom-themes/")
 
-;; (load-theme 'zenburn t)
 (require 'doom-themes)
 
 ;; Global settings (defaults)
@@ -137,10 +129,16 @@
 
 ;; Load the theme (doom-one, doom-molokai, etc); keep in mind that each theme
 ;; may have their own settings.
-(load-theme 'doom-vibrant t)
+(load-theme 'doom-one t)
 
 ;; Enable flashing mode-line on errors
 (doom-themes-visual-bell-config)
+
+;; Enable custom neotree theme
+(doom-themes-neotree-config)  ; all-the-icons fonts must be installed!
+
+;; Corrects (and improves) org-mode's native fontification.
+(doom-themes-org-config)
 
 (use-package ivy
   :ensure t
@@ -174,7 +172,7 @@
   :bind (("M-s" . er/expand-region)))
 
 
-(add-to-list 'default-frame-alist '(font . "Source Code Pro 10"))
+(add-to-list 'default-frame-alist '(font . "Monaco 10"))
 (add-to-list 'load-path "/home/lanskih/git/ace-jump-mode/")
 
 (autoload
@@ -196,6 +194,17 @@
   (setq elpy-rpc-backend "jedi"))
 
 (electric-pair-mode)
+
+(use-package ergoemacs-mode
+  :ensure t
+  :defer
+  :init (setq ergoemacs-theme nil) ;; Uses Standard Ergoemacs keyboard theme
+  (setq ergoemacs-keyboard-layout "us")
+  (ergoemacs-mode 1))
+
+(require 'xah-fly-keys)
+(xah-fly-keys-set-layout "qwerty")
+(xah-fly-keys 1)
 
 (defun prelude-personal-python-mode-defaults ()
   (elpy-mode)
@@ -221,11 +230,6 @@
   (setq-local flycheck-highlighting-mode nil)
   (setq-local flycheck-check-syntax-automatically nil))
 
-
-(require 'xah-fly-keys)
-(xah-fly-keys-set-layout "qwerty")
-(xah-fly-keys 1)
-
 (use-package which-key
   :ensure t
   :defer t
@@ -245,7 +249,7 @@
 (global-company-mode)
 (define-key c-mode-base-map (kbd "<C-tab>") (function company-complete))
 
-(rtags-enable-standard-keybindings c-mode-base-map "\C-r" )
+(rtags-enable-standard-keybindings c-mode-base-map "\C-q" )
 
 (defun infer-indentation-style ()
   (let ((space-count (how-many "^  " (point-min) (point-max)))
@@ -269,6 +273,36 @@
   (c-toggle-auto-hungry-state 1))
 
 (add-hook 'c++-mode-hook 'my-c++-mode-hook)
+
+(require 'org)
+
+(global-set-key "\C-cl" 'org-store-link)
+(global-set-key "\C-ca" 'org-agenda)
+(global-set-key "\C-cc" 'org-capture)
+(global-set-key "\C-cb" 'org-iswitchb)
+(setq org-log-done t)
+
+
+;; Rust
+(use-package rust-mode
+  :ensure t
+  :defer t
+  :init (add-hook 'rust-mode-hook 'cargo-minor-mode))
+
+  
+(use-package cargo
+  :ensure t
+  :defer t
+  :init
+  :bind (("C-c C-b" . cargo-process-build)
+	 ("C-c C-r" . cargo-process-run)
+         ("C-c C-t" . cargo-process-test)))
+
+(add-hook 'rust-mode-hook
+          (lambda ()
+            (local-set-key (kbd "C-c f") #'rust-format-buffer)))
+
+(setq rustfmt-bin "~/.cargo/bin/rustfmt")
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -276,7 +310,7 @@
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (doom-themes zenburn-theme zenburn xah-fly-keys which-key use-package rainbow-mode rainbow-identifiers rainbow-delimiters rainbow-blocks powerline package-store magit jedi indent-guide imenu-anywhere focus flycheck-rtags elpy dracula-theme counsel boon anzu ace-window))))
+    (zenburn-theme zenburn xah-fly-keys which-key use-package rainbow-mode rainbow-identifiers rainbow-delimiters rainbow-blocks quelpa powerline package-store package-build memoize magit jedi indent-guide imenu-anywhere font-lock+ focus flycheck-rtags ergoemacs-mode elpy dracula-theme diminish counsel cargo boon anzu ace-window))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
