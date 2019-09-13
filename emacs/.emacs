@@ -1,4 +1,4 @@
-;disable backup
+;;; Code:
 (setq backup-inhibited t)
 ;disable auto save
 (setq auto-save-default nil)
@@ -82,50 +82,13 @@
 
 (eval-when-compile
   (require 'use-package))
+
 (require 'diminish)
 (require 'bind-key)
 
-(use-package idle)
 (use-package imenu-anywhere
   :ensure t
   :bind (("C-c i" . imenu-anywhere)))
-
-(use-package company
-  :ensure t
-  :defer t
-  :init (global-company-mode))
-
-(use-package boon
-  :ensure t
-  :defer t
-  :init (boon-mode))
-
-(use-package powerline
-  :ensure t
-  :defer t
-  :init)
-
-(require 'boon-qwerty)
-
-(require 'boon-powerline)
-(boon-powerline-theme)
-
-(use-package rainbow-mode
-  :ensure t
-  :defer t
-  :init (rainbow-mode))
-
-(add-hook 'prog-mode-hook #'rainbow-delimiters-mode)
-
-(if (display-graphic-p) 
-    (load-theme 'dracula t)
-  (load-theme 'zenburn t))
- 
-(use-package swiper
-  :ensure t
-  :defer
-  :init
-  :bind (("\C-s" . swiper)))
 
 (use-package ivy
   :ensure t
@@ -152,8 +115,85 @@
          ("C-S-o" . counsel-rhytmbox)
          ("C-r" . counsel-expression-history)))
 
-(add-to-list 'default-frame-alist '(font . "Monaco 9"))
+(use-package expand-region
+  :ensure t
+  :defer
+  :init
+  :bind (("M-s" . er/expand-region)))
 
+(use-package magit
+  :ensure t
+  :defer
+  :init)
+
+(use-package elpy
+  :ensure t
+  :defer
+  :init (elpy-enable)
+  (setq elpy-rpc-backend "jedi"))
+
+(electric-pair-mode)
+
+(use-package ergoemacs-mode
+  :ensure t
+  :defer
+  :init (setq ergoemacs-theme nil) ;; Uses Standard Ergoemacs keyboard theme
+  (setq ergoemacs-keyboard-layout "us")
+  (ergoemacs-mode 1))
+
+(use-package xah-fly-keys
+  :ensure t
+  :defer
+  :init)
+
+(require 'xah-fly-keys)
+
+(xah-fly-keys-set-layout "qwerty")
+(xah-fly-keys 1)
+
+(use-package flycheck
+  :ensure t
+  :defer
+  :hook (prog-mode . flycheck-mode))
+
+(use-package company
+  :ensure t
+  :defer
+  :hook (prog-mode . company-mode)
+  :config (setq company-tooltip-align-annotations t)
+          (setq company-minimum-prefix-length 1))
+
+(use-package lsp-mode
+  :ensure t
+  :defer
+  :commands lsp
+  :config (require 'lsp-clients))
+
+(use-package lsp-ui
+  :enusre t
+  :defer)
+
+(use-package toml-mode
+  :ensure t
+  :defer)
+
+(use-package rust-mode
+  :ensure t
+  :defer
+  :hook (rust-mode . lsp))
+
+;; Add keybindings for interacting with Cargo
+(use-package cargo
+  :ensure t
+  :defer
+  :hook (rust-mode . cargo-minor-mode))
+
+(use-package flycheck-rust
+  :ensure t
+  :defer
+  :config (add-hook 'flycheck-mode-hook #'flycheck-rust-setup))
+
+(load-theme 'dracula t)
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -162,77 +202,10 @@
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (racer flycheck-rust cargo rust-mode flymake-google-cpplint flymake-cppcheck google-c-style flycheck-clangcheck zenburn-theme zenburn use-package rainbow-mode rainbow-delimiters powerline imenu-anywhere idle-require idle-highlight-mode idle-highlight firebelly-theme dracula-theme counsel company cl-lib-highlight cherry-blossom-theme boon))))
+    (dracula-theme flycheck rust-mode xah-fly-keys use-package rainbow-mode powerline magit imenu-anywhere expand-region ergoemacs-mode elpy diminish counsel))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  )
-
-(require 'flycheck-clangcheck)
-
-(defun my-select-clangcheck-for-checker ()
-  "Select clang-check for flycheck's checker."
-  (flycheck-set-checker-executable 'c/c++-clangcheck
-                                   "/usr/bin/clang-check")
-  (flycheck-select-checker 'c/c++-clangcheck))
-
-(add-hook 'c-mode-hook #'my-select-clangcheck-for-checker)
-(add-hook 'c++-mode-hook #'my-select-clangcheck-for-checker)
-
-;; enable static analysis
-(setq flycheck-clangcheck-analyze t)
-
-(use-package clang-format
-  :ensure t
-  :defer t
-  :init 
-  :bind (("C-c r" . clang-format-region)
-	 ("C-c u" . clang-format-buffer)))
-  
-(setq clang-format-style-option "google")
-
-
-;; Rust
-(use-package rust-mode
-  :ensure t
-  :defer t
-  :init (add-hook 'rust-mode-hook 'cargo-minor-mode))
-
-  
-(use-package cargo
-  :ensure t
-  :defer t
-  :init
-  :bind (("C-c C-b" . cargo-process-build)
-	 ("C-c C-r" . cargo-process-run)
-         ("C-c C-t" . cargo-process-test)))
-
-(add-hook 'rust-mode-hook
-          (lambda ()
-            (local-set-key (kbd "C-c f") #'rust-format-buffer)))
-
-(setq rustfmt-bin "~/.cargo/bin/rustfmt")
-
-(defun indent-buffer ()
-  "Indent current buffer according to major mode."
-  (interactive)
-  (indent-region (point-min) (point-max)))
-
-
-(setq racer-cmd "~/.cargo/bin/racer") ;; Rustup binaries PATH
-(setq racer-rust-src-path "~/git/rust/src") ;; Rust source code PATH
-
-(add-hook 'rust-mode-hook #'racer-mode)
-(add-hook 'racer-mode-hook #'eldoc-mode)
-(add-hook 'racer-mode-hook #'company-mode)
-
-(require 'rust-mode)
-(define-key rust-mode-map (kbd "TAB") #'company-indent-or-complete-common)
-(setq company-tooltip-align-annotations t)
-
-(use-package flycheck-rust
-  :ensure t
-  :defer t
-  :init (add-hook 'flycheck-mode-hook #'flycheck-rust-setup))
